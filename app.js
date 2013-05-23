@@ -29,24 +29,24 @@ var io = require('socket.io').listen(app);
 
 var spawn = require('child_process').spawn;
 //var ssh = spawn('sh');
-var ssh = spawn('ssh', ['-tt', 'amir@sharecode.ir']);
 
 
-
-ssh.on('exit', function (data) {
-	console.error("EX");
-});
 
 io.sockets.on('connection', function (socket) {
+  var ssh = spawn('sshpass', ['-p', '', 'ssh', '-tt', 'amir@localhost']);
+  ssh.on('exit', function (data) {
+    console.error("EX");
+  });
 	socket.on('stdin', function (data) {
 		console.log("-" + data.data + "-");
 		ssh.stdin.write(data.data.toString());
 	});
 	ssh.stdout.on('data', function (data) {
-		console.log(data);
+		console.log("@@" + data);
 		socket.emit('stdout', { data: data.toString() });
 	});
 	ssh.stderr.on('data', function (data) {
+    console.log("%%" + data);
 		socket.emit('stdout', { data: data.toString() });
 	});
 });
