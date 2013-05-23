@@ -1,0 +1,13 @@
+{
+  "name": "Minal",
+  "version": "0.0.1",
+  "description": "NodeJS Interactive SSH using Web browser",
+  "author": "Amir Saboury",
+  "dependencies": {
+    "socket.io": "~0.9.14"
+  },
+  "engine": {
+    "node": ">=0.10.5"
+  },
+  "readmeFilename": "README.md"
+}
