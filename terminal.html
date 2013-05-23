@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<script src="/static/jquery-1.9.1.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+	
+	var socket = io.connect('http://localhost:3000');
+	socket.on('stdout', function (data) {
+		var k = data.data.split("\n").join("<br />");
+		$("#terminal").append(k);
+		$("#outter").scrollTop($("#terminal").height());
+	});
+	
+	$(function () {
+		$(document).keypress(function (e) {
+			console.log(e.which + " " + e.keyCode + " " + e.ctrlKey);
+			var k = String.fromCharCode(e.which);
+			if (e.keyCode == 9) k = '\t';
+			if (e.which == 99 && e.ctrlKey) k = '^C\n';
+			if (e.which == 13) k = '\n';
+			e.preventDefault();
+			$("#terminal").append((k == '\n'?'<br />':k));
+			socket.emit('stdin', {data: k });
+			$("#outter").scrollTop($("#terminal").height());
+		});
+	});
+	
+	
+</script>
+<title>Minal</title>
+<style type="text/css">
+	* {
+		margin:0px;
+		padding:0px;
+	}
+	body, html {
+		width:100%;
+		height:100%;
+		background:black;
+	}
+	div#outter {
+		overflow:auto;
+		height:100%;
+		width:100%;
+	}
+	div#terminal {
+		width:100%;
+		background:black;
+		color:white;
+		vertical-align:bottom;
+		font-family:Consolas, "Courier New", Courier, monospace;
+		font-size:13px;
+	}
+</style>
+</head>
+
+<body>
+	<div id="outter">
+        <div id="terminal">
+            amir@localhost
+        </div>
+    </div>
+</body>
+</html>
