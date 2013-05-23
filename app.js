@@ -28,8 +28,8 @@ var io = require('socket.io').listen(app);
 
 
 var spawn = require('child_process').spawn;
-var ssh = spawn('sh');
-
+//var ssh = spawn('sh');
+var ssh = spawn('ssh', ['-tt', 'amir@sharecode.ir']);
 
 
 
@@ -39,7 +39,7 @@ ssh.on('exit', function (data) {
 
 io.sockets.on('connection', function (socket) {
 	socket.on('stdin', function (data) {
-		console.log(data.data);
+		console.log("-" + data.data + "-");
 		ssh.stdin.write(data.data.toString());
 	});
 	ssh.stdout.on('data', function (data) {

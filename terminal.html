@@ -13,20 +13,55 @@
 		$("#outter").scrollTop($("#terminal").height());
 	});
 	
+	function mapKey (keyCode) {
+		var k;
+		switch (keyCode) {
+			case 38: k = '\C-[[A'; break;
+			case 188: k = ','; break;
+			case 189: k = '-'; break;
+			case 190: k = '.'; break;
+			case 191: k = '/'; break;
+			default: k = String.fromCharCode(keyCode);
+			break;
+		}
+		return k;
+	}
+	
 	$(function () {
-		$(document).keypress(function (e) {
-			console.log(e.which + " " + e.keyCode + " " + e.ctrlKey);
+		$(document).keydown(function (e) {
+			e.preventDefault();
+			console.log(e.which);
+			if (e.keyCode == 16) return;
+			if (e.metaKey) return;
+			var k = mapKey(e.which);
+			var toEmit;
+			/*if (e.ctrlKey && e.keyCode != 17) {
+			toEmit = '^' + k;
+			} else*/
+			if (e.which == 13) k = '\n';
+			if (e.shiftKey) {
+				toEmit = k;
+			} else {
+				toEmit = k.toLowerCase();
+			}
+			
+			k = toEmit;
+			socket.emit('stdin', {data: toEmit });
+			$("#terminal").append((k == '\n'?'<br />':k));
+		});
+
+
+		/*
 			var k = String.fromCharCode(e.which);
 			if (e.keyCode == 9) k = '\t';
 			if (e.which == 99 && e.ctrlKey) k = '^C\n';
 			if (e.which == 13) k = '\n';
 			e.preventDefault();
 			$("#terminal").append((k == '\n'?'<br />':k));
-			socket.emit('stdin', {data: k });
+			//socket.emit('stdin', {data: k });
 			$("#outter").scrollTop($("#terminal").height());
-		});
+		*/
 	});
-	
 	
 </script>
 <title>Minal</title>
