@@ -133,30 +133,65 @@
 
 	$(function () {
 		$(document).keydown(function (e) {
+			var key = String.fromCharCode(e.keyCode)
 
 			if (e.which == 9) {
 				sendKeyData(e.which);
 				e.preventDefault();
+				return;
 			}
 
 			if (e.which == 8) {
 				sendKeyData(e.which);
 				e.preventDefault();
+				return;
 			}
-			var key = String.fromCharCode(e.keyCode)
+
 			if (key == 'C' && e.ctrlKey) {
 				e.preventDefault();
 				sendData("\x03");
+				return;
 			}
 			if (key == 'L' && e.ctrlKey) {
 				e.preventDefault();
-				console.log("\x0C");
 				sendData("\x0C");
+				return;
 			}
-			//e.preventDefault();
+			if (key == 'D' && e.ctrlKey) {
+				e.preventDefault();
+				sendData("\x04");
+				return;
+			}
+			
+			if (key == 'Z' && e.ctrlKey) {
+				e.preventDefault();
+				sendData("\x1A");
+				return;
+			}
+
+			// up
+			if (e.which == 38) {
+				e.preventDefault();
+				sendData('\x1b\x5b\x41');
+				return;
+			}
+
+			// down
+			if (e.which == 40) {
+				e.preventDefault();
+				sendData('\x1b\x5b\x42');
+				return;
+			}
+
+			if (e.which == 38) {
+				e.preventDefault();
+				console.log('\x1b\x5b\x41');
+				sendData('\x1b\x5b\x41');
+				return;
+			}
+			
 			console.log("DOWN");
-			console.log(e.which + " " + e.keyCode + " " + e.metaKey);
-			console.log(String.fromCharCode(e.keyCode));
+			console.log(e.which + " " + e.keyCode + " " + e.metaKey + " " + key);
 		});
 		$(document).keypress(function (e) {
 			e.preventDefault();
@@ -192,7 +227,7 @@
 		vertical-align:bottom;
 		font-family:Consolas, "Courier New", Courier, monospace;
 		font-size:13px;
-		white-space:pre-wrap;
+		white-space:pre;
 	}
 	<style>
 	/* 00=none 01=bold 04=underscore 05=blink 07=reverse 08=concealed */
