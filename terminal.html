@@ -5,6 +5,31 @@
 <script src="/static/jquery-1.9.1.min.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
+	var beep = (function () {
+		var ctx = new(window.audioContext || window.webkitAudioContext);
+		return function (duration, type, finishedCallback) {
+
+			duration = +duration;
+			type = (type % 5) || 0;
+			if (typeof finishedCallback != "function") {
+				finishedCallback = function () {};
+			}
+
+			var osc = ctx.createOscillator();
+
+			osc.type = type;
+
+			osc.connect(ctx.destination);
+			osc.noteOn(0);
+
+			setTimeout(function () {
+				osc.noteOff(0);
+				finishedCallback();
+			}, duration);
+
+		};
+	})();
+	
 	var cursor = '<span class="cursor">█</span>';
 	function removeCursor() {
 		$("#terminal").html($("#terminal").html().slice(0, -cursor.length));
@@ -63,6 +88,7 @@
 			return;
 		}else if (data.data == '\u0007') {
 			console.log("BEEEEP");
+			beep(50, 0);
 			return;
 		}
 		var k = parse(data.data);
@@ -85,12 +111,16 @@
 		return k;
 	}
 	
-	function sendData(keyCode) {
+	function sendKeyData(keyCode) {
 		var k;// = mapKey(keyCode);
 		if (keyCode == 13 || keyCode == 10) k = '\n';
 		else k = String.fromCharCode(keyCode);
 		console.log("Sending: '" + keyCode + "'' = " + k);
 		socket.emit('stdin', {data: k});
+	}
+	function sendData(code) {
+		console.log("Sending: '" + code + "'");
+		socket.emit('stdin', {data: code});
 	}
 	// 9:  tab
 	// 37: left
@@ -103,13 +133,19 @@
 		$(document).keydown(function (e) {
 
 			if (e.which == 9) {
-				sendData(e.which);
+				sendKeyData(e.which);
 				e.preventDefault();
 			}
 
 			if (e.which == 8) {
-				sendData(e.which);
+				sendKeyData(e.which);
 				e.preventDefault();
+			}
+			var key = String.fromCharCode(e.keyCode)
+			if (key == 'C' && e.ctrlKey) {
+				e.preventDefault();
+				console.log('\x03');
+				sendData("\x03");
 			}
 			//e.preventDefault();
 			console.log("DOWN");
@@ -121,7 +157,7 @@
 			console.log("PRESS");
 			console.log(e.which + " " + e.keyCode + " " + e.metaKey);
 			console.log(String.fromCharCode(e.keyCode));
-			sendData(e.keyCode);
+			sendKeyData(e.keyCode);
 		});
 
 	});
