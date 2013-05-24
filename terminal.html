@@ -5,6 +5,9 @@
 <script src="/static/jquery-1.9.1.min.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
+	// http://www.xfree86.org/current/ctlseqs.html#PC-Style%20Function%20Keys
+	// http://foldoc.org/ASCII+character+table
+	// http://en.wikipedia.org/wiki/ASCII#ASCII_control_characters
 	var beep = (function () {
 		var ctx = new(window.audioContext || window.webkitAudioContext);
 		return function (duration, type, finishedCallback) {
