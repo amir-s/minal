@@ -47,12 +47,23 @@
 		$("#terminal").append(text);
 		addCursor();
 	}
+	function clearTerminal() {
+		$("#terminal").html('');
+		addCursor();
+	}
 	function parse (raw) {
 		var parsed = raw;
 		//parsed = parsed.split(' ').join('&nbsp;');
 		parsed = parsed.split('\r\n').join('<br />');
 		parsed = parsed.split('\r').join('<br />');
 		parsed = parsed.split('\n').join('<br />');
+
+		var clearRE = /\[2J/;
+		if (parsed.match(clearRE)) {
+			parsed = parsed.replace('[2J', '');
+			parsed = parsed.replace('[H', '');
+			clearTerminal();
+		}
 
 		var colorRE = /\[(.*?)\m/gi;
 		var m = null;
@@ -68,26 +79,17 @@
 				parsed = parsed.replace(m[0], output);
 			}
 		}
-
-		var clearRE = /\[2J/;
-		if (parsed.match(clearRE)) {
-			parsed = parsed.replace('[2J', '');
-			parsed = parsed.replace('[H', '');
-			//$('#term').html('');
-		}
-
 		parsed = parsed.split(']0;').join('');
 		return parsed;
 	}
 	
 	var socket = io.connect('http://localhost:3000');
 	socket.on('stdout', function (data) {
-		console.log(data.data);
+		console.log("raw " + data.data);
 		if (data.data == '\b\u001b[K') {
 			backSpace();
 			return;
 		}else if (data.data == '\u0007') {
-			console.log("BEEEEP");
 			beep(50, 0);
 			return;
 		}
@@ -144,8 +146,12 @@
 			var key = String.fromCharCode(e.keyCode)
 			if (key == 'C' && e.ctrlKey) {
 				e.preventDefault();
-				console.log('\x03');
 				sendData("\x03");
+			}
+			if (key == 'L' && e.ctrlKey) {
+				e.preventDefault();
+				console.log("\x0C");
+				sendData("\x0C");
 			}
 			//e.preventDefault();
 			console.log("DOWN");
