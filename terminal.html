@@ -5,47 +5,69 @@
 <script src="/static/jquery-1.9.1.min.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
+	var cursor = '<span class="cursor">█</span>';
+	function removeCursor() {
+		$("#terminal").html($("#terminal").html().slice(0, -cursor.length));
+	}
+	function addCursor() {
+		$("#terminal").html($("#terminal").html() + cursor);
+	}
+	function backSpace() {
+		removeCursor();
+		$("#terminal").html($("#terminal").html().slice(0, -1));
+		addCursor();
+	}
+	function addToTerminal(text) {
+		removeCursor();
+		$("#terminal").append(text);
+		addCursor();
+	}
+	function parse (raw) {
+		var parsed = raw;
+		//parsed = parsed.split(' ').join('&nbsp;');
+		parsed = parsed.split('\r\n').join('<br />');
+		parsed = parsed.split('\r').join('<br />');
+		parsed = parsed.split('\n').join('<br />');
+
+		var colorRE = /\[(.*?)\m/gi;
+		var m = null;
+		while (m = colorRE.exec(parsed)) {
+			if (m[0] == '[0m') {
+				parsed = parsed.replace(m[0], '</span>');
+			} else {
+				var r = m[1].split(';');
+				if (r[0]) r[0] = 'attribute-' + +r[0];
+				if (r[1]) r[1] = 'text-' + +r[1];
+				if (r[2]) r[2] = 'background-' + +r[2];
+				var output = '<span class="' + r.join(' ') + '">';
+				parsed = parsed.replace(m[0], output);
+			}
+		}
+
+		var clearRE = /\[2J/;
+		if (parsed.match(clearRE)) {
+			parsed = parsed.replace('[2J', '');
+			parsed = parsed.replace('[H', '');
+			//$('#term').html('');
+		}
+
+		parsed = parsed.split(']0;').join('');
+		return parsed;
+	}
 	
-function parse (raw) {
-  var parsed = raw;
-  parsed = parsed.split(' ').join('&nbsp;');
-  parsed = parsed.split('\r\n').join('<br />');
-  parsed = parsed.split('\r').join('<br />');
-  parsed = parsed.split('\n').join('<br />');
-
-  var colorRE = /\[(.*?)\m/gi;
-  var m = null;
-  while (m = colorRE.exec(parsed)) {
-    if (m[0] == '[0m') {
-      parsed = parsed.replace(m[0], '</span>');
-    } else {
-      var r = m[1].split(';');
-      if (r[0]) r[0] = 'attribute-' + +r[0];
-      if (r[1]) r[1] = 'text-' + +r[1];
-      if (r[2]) r[2] = 'background-' + +r[2];
-      var output = '<span class="' + r.join(' ') + '">';
-      parsed = parsed.replace(m[0], output);
-    }
-  }
-
-  var clearRE = /\[2J/;
-  if (parsed.match(clearRE)) {
-    parsed = parsed.replace('[2J', '');
-    parsed = parsed.replace('[H', '');
-    //$('#term').html('');
-  }
-  return parsed;
-}
 	var socket = io.connect('http://localhost:3000');
 	socket.on('stdout', function (data) {
 		console.log(data.data);
 		if (data.data == '\b\u001b[K') {
-			console.log("del");
-			$("#terminal").html($("#terminal").html().slice(0, -1));
+			backSpace();
+			return;
+		}else if (data.data == '\u0007') {
+			console.log("BEEEEP");
 			return;
 		}
 		var k = parse(data.data);
-		$("#terminal").append(k);
+		addToTerminal(k);
+		console.log("appending: '" + k + "'")
 		$("#outter").scrollTop($("#terminal").height());
 	});
 	
@@ -63,41 +85,45 @@ function parse (raw) {
 		return k;
 	}
 	
+	function sendData(keyCode) {
+		var k;// = mapKey(keyCode);
+		if (keyCode == 13 || keyCode == 10) k = '\n';
+		else k = String.fromCharCode(keyCode);
+		console.log("Sending: '" + keyCode + "'' = " + k);
+		socket.emit('stdin', {data: k});
+	}
+	// 9:  tab
+	// 37: left
+	// 38: up
+	// 39: right
+	// 40: down
+
+
 	$(function () {
 		$(document).keydown(function (e) {
-			e.preventDefault();
+
+			if (e.which == 9) {
+				sendData(e.which);
+				e.preventDefault();
+			}
+
+			if (e.which == 8) {
+				sendData(e.which);
+				e.preventDefault();
+			}
+			//e.preventDefault();
+			console.log("DOWN");
 			console.log(e.which + " " + e.keyCode + " " + e.metaKey);
 			console.log(String.fromCharCode(e.keyCode));
-			if (e.keyCode == 16) return;
-			if (e.metaKey) return;
-			var k = mapKey(e.which);
-			var toEmit;
-			/*if (e.ctrlKey && e.keyCode != 17) {
-			toEmit = '^' + k;
-			} else*/
-			if (e.which == 13) k = '\n';
-			if (e.shiftKey) {
-				toEmit = k;
-			} else {
-				toEmit = k.toLowerCase();
-			}
-			
-			k = toEmit;
-			socket.emit('stdin', {data: toEmit });
-			//$("#terminal").append((k == '\n'?'<br />':k));
+		});
+		$(document).keypress(function (e) {
+			e.preventDefault();
+			console.log("PRESS");
+			console.log(e.which + " " + e.keyCode + " " + e.metaKey);
+			console.log(String.fromCharCode(e.keyCode));
+			sendData(e.keyCode);
 		});
 
-
-		/*
-			var k = String.fromCharCode(e.which);
-			if (e.keyCode == 9) k = '\t';
-			if (e.which == 99 && e.ctrlKey) k = '^C\n';
-			if (e.which == 13) k = '\n';
-			e.preventDefault();
-			$("#terminal").append((k == '\n'?'<br />':k));
-			//socket.emit('stdin', {data: k });
-			$("#outter").scrollTop($("#terminal").height());
-		*/
 	});
 	
 </script>
@@ -124,6 +150,7 @@ function parse (raw) {
 		vertical-align:bottom;
 		font-family:Consolas, "Courier New", Courier, monospace;
 		font-size:13px;
+		white-space:pre-wrap;
 	}
 	<style>
 	/* 00=none 01=bold 04=underscore 05=blink 07=reverse 08=concealed */
@@ -136,6 +163,12 @@ function parse (raw) {
 	}
 	.attribute-7 { }
 	.attribute-8 { }
+
+	span.cursor {
+	  -webkit-animation: pulse 2s ease infinite;
+	  -moz-animation: pulse 2s ease infinite;
+	  -ms-animation: pulse 2s ease infinite;
+	}
 
 	@-webkit-keyframes pulse {
 	 0% { opacity: 1; }

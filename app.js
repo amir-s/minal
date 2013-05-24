@@ -33,7 +33,7 @@ var spawn = require('child_process').spawn;
 
 
 io.sockets.on('connection', function (socket) {
-  var ssh = spawn('sshpass', ['-p', '', 'ssh', '-tt', 'amir@localhost']);
+  var ssh = spawn('sshpass', ['-p', 'onClipEvent', 'ssh', '-tt', 'amir@localhost']);
   ssh.on('exit', function (data) {
     console.error("EX");
   });
